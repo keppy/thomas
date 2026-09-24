@@ -1,14 +1,13 @@
 # thomas
 
-**thomas.train()**: a training harness. Named after Thomas the Tank Engine
-(it's a train) and Thomas Barrow of Downton Abbey (it's the undercrogue that
-earns its place).
-
-Give it a case set and a reward function. It gives you a baseline card, a
+Give thomas a case set and a reward function. It gives you a baseline card, a
 training run, and a before/after comparison, with
 [gonogo](https://github.com/keppy/gonogo) making the ship / don't-ship call at
 each end. The domain supplies the case shape and the reward; thomas supplies
 the plumbing.
+
+*`thomas.train()`: named after Thomas the Tank Engine (it's a train) and Thomas
+Barrow of Downton Abbey (it's the undercrogue that earns its place).*
 
 ```
                     ┌── encoder SFT ── (text, label) → Modal L4 → calibrated classifier
@@ -24,28 +23,11 @@ numbers.
 
 [![Fine-tuning an encoder and getting a go/no-go verdict — thomas + gonogo](https://i.ytimg.com/vi/ozWITnaJtf4/maxresdefault.jpg)](https://youtu.be/ozWITnaJtf4)
 
-**Video (40:33):** the whole pipeline worked live — plan, contract, a subagent building the thomas training path, two dead runs and one false alarm, and the Modal fine-tune of [ModernBERT-small-v2](https://huggingface.co/johnnyboycurtis/ModernBERT-small-v2) on an L4 for under $1. Result on the gonogo Banking77 canary: 87.2% [82.5%, 90.8%] pass rate, **AUTOMATE WITH REVIEW** at confidence ≥ 0.91 (98.3% precision on 71% of cases), calibration error 0.03 after temperature scaling, +10.0 points over the TF-IDF baseline (p = 0.000, same 250 cases). [Writeup](https://www.keppylab.com/blog/2026/09/21/banking77-canary-872-pass-two-dead-runs-one-false-alarm/).
+**Video (40:33):** the whole pipeline worked live: plan, contract, a subagent building the thomas training path, two dead runs and one false alarm, and the Modal fine-tune of [ModernBERT-small-v2](https://huggingface.co/johnnyboycurtis/ModernBERT-small-v2) on an L4 for under $1, scored on the gonogo Banking77 canary. [Writeup](https://www.keppylab.com/blog/2026/09/21/banking77-canary-872-pass-two-dead-runs-one-false-alarm/).
 
-## The contract with gonogo
-
-thomas and gonogo agree on four things: the case shape, the reward signature,
-the confidence definition (`max(softmax(logits / T))` over the full label set),
-and the artifact a training run leaves on disk. They're written down and
-versioned in **[docs/CONTRACT.md](docs/CONTRACT.md)**. It's contract version 1,
-tested against gonogo-eval `>=0.2,<0.3`.
-
-```python
-from thomas.contract import read_artifact   # stdlib only, no torch needed
-art = read_artifact("examples/artifacts/banking77-enc")
-art["temperature"], len(art["label2id"])    # 0.78, 77
-```
-
-## What thomas is not
-
-- Not gonogo (that's the scoring/decision layer; thomas imports it)
-- Not a model (that's Tinker, Modal or nanogpt; thomas drives them)
-- Not a case format (that's the domain)
-- Not an eval framework (that's gonogo + the domain's checks)
+- 87.2% [82.5%, 90.8%] pass rate against a 95% target → **AUTOMATE WITH REVIEW**
+- at confidence ≥ 0.91: 98.3% precision [95.1%, 99.4%] on 71% of cases, the rest routed to a human
+- calibration error 0.03 after temperature scaling; +10.0 points over the TF-IDF baseline on the same 250 cases (p < 0.001)
 
 ## Install
 
@@ -56,6 +38,14 @@ pip install -e ".[post_train]"      # + Tinker RL
 ```
 
 Not on PyPI yet; install from a clone.
+
+## Try it
+
+```bash
+python examples/banking77_encoder.py --dry-run     # free: prints the config and the split, spends nothing
+python examples/banking77_predict.py --model-dir examples/artifacts/banking77-enc \
+    "I lost my card" "why was I charged twice"   # the published artifact, on CPU
+```
 
 ## Encoder fine-tune (Modal)
 
@@ -142,11 +132,37 @@ Known constraints (each cost a run to learn):
 - Server mode (`vllm_mode="server"`) hangs on Modal's kernel 4.19; colocate
   is the supported mode.
 
-## Hermes
+## The contract with gonogo
 
-[hermes-plugin-thomas](https://github.com/keppy/hermes-plugin-thomas) exposes
-the encoder path to a Hermes agent: check data, train (behind the human
-approval gate), poll, and evaluate with gonogo.
+thomas and gonogo agree on six things: case ids, reward → `passed` / `score`,
+the confidence definition (`max(softmax(logits / T))` over the full label set),
+the artifact a training run leaves on disk, eval splits, and the gonogo calls
+thomas depends on. They're written down and versioned in **[docs/CONTRACT.md](docs/CONTRACT.md)**. It's contract version 1,
+tested against gonogo-eval `>=0.2,<0.3`.
+
+```python
+from thomas.contract import read_artifact   # stdlib only, no torch needed
+art = read_artifact("examples/artifacts/banking77-enc")
+art["temperature"], len(art["label2id"])    # 0.78, 77
+```
+
+## Works with
+
+| | |
+| --- | --- |
+| [gonogo](https://github.com/keppy/gonogo) | Turns a score into a ship / don't-ship decision, with intervals |
+| [thomas](https://github.com/keppy/thomas) | Trains the model: encoder fine-tune on Modal, or RL on Tinker / Modal |
+| [hermes-plugin-gonogo](https://github.com/keppy/hermes-plugin-gonogo) | gonogo as Hermes agent tools |
+| [hermes-plugin-thomas](https://github.com/keppy/hermes-plugin-thomas) | thomas's encoder path as Hermes agent tools, GPU launches behind the approval gate |
+
+The thomas ↔ gonogo contract is [above](#the-contract-with-gonogo).
+
+## What thomas is not
+
+- Not gonogo (that's the scoring/decision layer; thomas imports it)
+- Not a model (that's Tinker, Modal or nanogpt; thomas drives them)
+- Not a case format (that's the domain)
+- Not an eval framework (that's gonogo + the domain's checks)
 
 ## Changelog
 
