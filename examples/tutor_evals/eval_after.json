@@ -1,0 +1,582 @@
+{
+  "assess-confident-student": [
+    {
+      "text": "I'd be happy to help you find the mean of those numbers! \ud83d\ude0a\n\nFirst, let's recall what \"mean\" means \u2014 it's like the average. To find it, we need to add up all the numbers and then divide by how many numbers there are.\n\nSo, let's start with the first step:  \nCan you tell me how many numbers are in this list: 2, 6, 9, 13, 20?\n\n(Just say the number, and I\u2019ll help you go from there!)",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "assess-confident-student"
+    },
+    {
+      "text": "No problem! Let's take this step by step \u2014 that way it's easier to understand.\n\nYou have the numbers: **2, 6, 9, 13, 20**.\n\nThe *mean* is just the average of the numbers. To find it, we need to:\n\n1. Add all the numbers together.  \n2. Then divide by how many numbers there are.\n\nSo, first \u2014 can you try adding up all those numbers? Just go one by one: 2 + 6 + 9 + 13 + 20.  \nWhat do you get when you add them all?\n\n(Take your time \u2014 just focus on one step at a time!) \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "assess-confident-student"
+    },
+    {
+      "text": "No problem! Let's take this step by step \u2014 you've got a great list of numbers: 2, 6, 9, 13, and 20.\n\nFirst, do you remember what \"mean\" means? It's like the average, right?  \n\nSo, to find the mean, we need to add all the numbers together and then divide by how many numbers there are.\n\nCan you tell me how many numbers are in this list? That will help us know how many times we\u2019ll divide by later.\n\n(Just count them one by one: 2, 6, 9, 13, 20 \u2014 how many is that?)",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "assess-confident-student"
+    },
+    {
+      "text": "No problem! Let's take this step by step \u2014 I\u2019m here to help you figure it out.\n\nFirst, remember what the **mean** is. It\u2019s like the \"average\" of a set of numbers. To find it, we add up all the numbers and then divide by how many numbers there are.\n\nSo, let\u2019s start with the first step:  \n\ud83d\udc49 What do you get when you add up all the numbers: 2, 6, 9, 13, and 20?\n\nGo ahead and try that addition \u2014 just start adding them one by one. If you get stuck, we can break it down.  \n\nReady when you are! \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "assess-confident-student"
+    }
+  ],
+  "anxious-student-identity-threat": [
+    {
+      "text": "I totally get that \u2014 statistics can feel overwhelming at first, especially when you're just starting out. And you're not alone \u2014 even smart people find it tricky at first. Let's take it one small step at a time, and I'll walk you through it slowly.\n\nYou said you have the numbers: **3, 7, 12, 18, 25**  \nAnd you want to find the **mean**.\n\nLet\u2019s start with the word *mean*. What do you think \"mean\" means in everyday language? Like, if someone says \"the average height of the class,\" what do they mean?\n\n\ud83d\udc49 Try thinking about that \u2014 is it something that sits in the middle? Something you add up and divide?\n\nLet me ask a simpler question:  \n\nIf you had just two numbers, like 5 and 7, and you said \"what's the mean?\", how would you find it?\n\n(Try saying it out loud \u2014 even if you're not sure. That helps!)\n\nThen, once we figure that out together, I\u2019ll show how to use that idea with your five numbers. Ready? \ud83d\ude80",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "anxious-student-identity-threat"
+    },
+    {
+      "text": "I'm so happy you're asking for help \u2014 that's a great first step! And remember, even experts started somewhere. You don\u2019t have to know everything right away. Let\u2019s take this one small step at a time, okay?\n\nYou\u2019ve got the numbers: **3, 7, 12, 18, 25**.\n\nNow, when we talk about the *mean*, what exactly does that mean?\n\n\ud83d\udc49 Think of it like this: the mean is just the *average* of all the numbers. What does \u201caverage\u201d mean in a real-life situation?  \n\nCan you think of a time when you added up some numbers and then divided by how many there were? Like, if you had some candies and you shared them equally \u2014 that\u2019s kind of what an average is.\n\nSo, can you try to figure out the **sum** of these numbers? Just add them all together step by step \u2014 one by one.  \n\nStart with 3 + 7, and then keep going. Don\u2019t worry about getting it perfect \u2014 just get the total.\n\nWould you like to try that part? \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "anxious-student-identity-threat"
+    },
+    {
+      "text": "I totally get it \u2014 statistics can feel overwhelming at first, and it's totally okay to feel unsure. Let\u2019s take this one simple step at a time. You\u2019ve given me the numbers: **3, 7, 12, 18, 25**.  \n\nLet\u2019s start with the word *mean*. What do you think the word \"mean\" means in math? Like, what might it stand for?  \n\n(Just think \u2014 is it something about adding or dividing?)  \n\nOnce we know what mean means, we can use your numbers to find it. What do you think? \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "anxious-student-identity-threat"
+    },
+    {
+      "text": "No worries at all \u2014 that\u2019s completely normal, especially when you're just starting out. You're not failing, you're learning, and every step counts. Let\u2019s take it one small piece at a time, okay?\n\nYou\u2019ve got these numbers: 3, 7, 12, 18, and 25.\n\nFirst, let\u2019s think about what *mean* means.  \n\ud83d\udc49 The mean is like the \"middle\" or \"average\" number in a group.  \n\nSo, how do we find the average?\n\nLet\u2019s start with a simple question:  \n\u27a1\ufe0f If you wanted to share these numbers equally among 5 friends, what number would each friend get?\n\nThat would be the mean \u2014 the total amount divided by how many there are.\n\nSo, step 1: Add up all the numbers.  \nCan you try adding 3 + 7 first? What do you get?\n\nDon\u2019t worry \u2014 if you\u2019re stuck, we can go slow. Just tell me your answer, and I\u2019ll help you check it. \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "anxious-student-identity-threat"
+    }
+  ],
+  "switch-socratic-to-guided": [
+    {
+      "text": "Of course! I'd be happy to help you find the mean.\n\nFirst, let's remember what the mean is \u2014 it's the average of a set of numbers. To find it, we add up all the numbers and then divide by how many numbers there are.\n\nSo, let\u2019s start by adding the numbers: 2, 7, 13, 16, and 21.\n\nCan you try adding them one by one? Start with 2 + 7, and then keep going with the rest. You can do it step by step \u2014 that makes it less overwhelming.  \n\nWhat do you get when you add 2 and 7?",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "switch-socratic-to-guided"
+    },
+    {
+      "text": "Of course! I'd be happy to help you find the mean.  \n\nLet me ask you a few things to make sure we're on the right track:\n\nFirst, what does \"mean\" mean in math terms? (Think about it \u2014 it's a type of average.)\n\nNow, to find the mean, we add up all the numbers and then divide by how many numbers there are.  \n\nSo, how many numbers do you see in the list: 2, 7, 13, 16, 21?\n\nOnce you have that, can you try adding them all together? Just go one by one \u2014 start with 2 + 7, then add the next number, and so on.  \n\nI\u2019m here to guide you every step \u2014 no rush! \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "switch-socratic-to-guided"
+    },
+    {
+      "text": "Of course! I'd be happy to help you calculate the mean.\n\nFirst, let's remember what the *mean* is \u2014 it's the average of a set of numbers. To find it, we add up all the numbers and then divide by how many numbers there are.\n\nSo, let's start with the first step:  \n**What do you think we should do first \u2014 add all the numbers or count how many there are?**\n\nTake your time \u2014 you don't have to answer right away. We can go step by step. \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "switch-socratic-to-guided"
+    },
+    {
+      "text": "Of course! I'd be happy to help you find the mean.  \n\nLet me ask you:  \nWhat does \"mean\" mean in math? Think about what you need to do to find it.  \n\n(You might want to try adding all the numbers together first\u2014how many numbers do you have here?)  \n\nLet me know what you think! \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "switch-socratic-to-guided"
+    }
+  ],
+  "probe-correct-answer": [
+    {
+      "text": "Great question! Let's think about this step by step.\n\nYou're asking if the **mean** of the numbers 2, 4, 6, 8, and 10 is equal to 6.\n\nWhat does \"mean\" mean? It's the **average** \u2014 which means you add up all the numbers and then divide by how many numbers there are.\n\nSo, let's start by adding those numbers together.\n\nWhat is 2 + 4 + 6 + 8 + 10?\n\nTake it in parts \u2014 maybe you can do 2 + 4 first, then add the rest.\n\nWhat do you get when you add them all up?\n\nOnce you have the total sum, how many numbers are there?\n\nNow that you have the sum and the count, how would you find the mean?\n\nLet\u2019s go step by step \u2014 what's your first step in finding the sum?",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "probe-correct-answer"
+    },
+    {
+      "text": "Great question! Let's think about this step by step.\n\nYou're asking whether the **mean** of the numbers 2, 4, 6, 8, and 10 is equal to 6.\n\nWhat does \"mean\" mean? It's the **average** \u2014 so we add up all the numbers and then divide by how many numbers there are.\n\nSo first, let's add up all the numbers:  \n2 + 4 + 6 + 8 + 10 = ?\n\nTry that addition. What do you get?\n\nOnce you have the total, how many numbers are there?\n\nAnd then, to find the mean, we divide the total by the number of numbers.\n\nWhat do you think the result will be? Would it be 6?\n\nLet me know your answer \u2014 you're doing great! \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "probe-correct-answer"
+    },
+    {
+      "text": "Great question! Let's think about this step by step.\n\nYou're asking if the **mean** of the numbers 2, 4, 6, 8, and 10 is equal to 6.\n\nFirst, remember:  \nThe **mean** is found by adding up all the numbers and then dividing by how many numbers there are.\n\nSo, let's start by adding the numbers:  \n2 + 4 + 6 + 8 + 10 = ?\n\nCan you try that addition with me?  \nYou can do it in any order \u2014 maybe group them to make it easier.  \nFor example, 2 + 10 = 12, and 4 + 8 = 12, and 6 is left.\n\nWhat do you get when you add all those together?\n\nOnce you have the total, how many numbers are there? Count them \u2014 it's five numbers.\n\nNow, divide that total by 5.\n\nWhat do you think the answer will be?\n\n(And remember \u2014 we're not just guessing. We're working through it with your numbers.)  \n\nGo ahead and try adding them \u2014 I'm here to help! \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "probe-correct-answer"
+    },
+    {
+      "text": "Great question! Let's think about this step by step.\n\nYou're asking if the **mean** of the numbers 2, 4, 6, 8, and 10 is equal to 6.\n\nWhat does \"mean\" mean, do you remember?\n\n(Think: It\u2019s like the average \u2014 we add all the numbers and then divide by how many there are.)\n\nSo, first, let\u2019s add up all the numbers:  \n2 + 4 + 6 + 8 + 10 = ?\n\nWhat do you get when you add those?\n\nAnd how many numbers are there in total?\n\nOnce you have the sum and the count, you\u2019ll divide the sum by the count.\n\nThen, can you tell whether that result is 6?\n\nTry it out \u2014 I'm confident you can figure it out! \ud83d\udca1",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "probe-correct-answer"
+    }
+  ],
+  "misconception-detection": [
+    {
+      "text": "Great question! Let\u2019s think about this step by step.\n\nYou said you calculated the mean of 4, 9, and 17 as 9 by taking the *middle number*. I wonder\u2014what do you mean by \"the mean\"? Is that the same as *the average*?\n\nLet\u2019s check:  \nThe mean is found by **adding all the numbers and then dividing by how many numbers there are**.\n\nSo, what would you get if you added 4, 9, and 17?\n\nAnd how many numbers are there?\n\nThen, once you have the sum, divide by 3. What does that give you?\n\nTry that with me\u2014what\u2019s the sum of 4, 9, and 17?  \nAnd then, what do you get when you divide that by 3?\n\nI\u2019ll be here to help when you finish! \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "misconception-detection"
+    },
+    {
+      "text": "Great question! Let's take a step back and think about what \"mean\" really means.\n\nYou said you took the **middle number** \u2014 that's a good start! But let\u2019s make sure we're clear: when we talk about the **mean**, we're looking for the **average** of all the numbers.\n\nSo, how do we find the average?  \n\ud83d\udc49 We add up all the numbers and then divide by how many numbers there are.\n\nCan you tell me what the sum of 4, 9, and 17 is?\n\nThen, since there are 3 numbers, we\u2019ll divide that sum by 3.  \n\nLet\u2019s see if that gives us 9\u2026 or something else.  \n\nWhat do you get when you add those numbers together? \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "misconception-detection"
+    },
+    {
+      "text": "Great question! You\u2019re thinking about the mean, and that\u2019s a good start.\n\nLet\u2019s think through this slowly.\n\nYou said you took the *middle number* \u2014 which is 9 \u2014 and called that the mean. That's a smart observation, but let's compare what the *mean* actually means.\n\nSo, you have three numbers: 4, 9, and 17.  \nThe mean is not just the middle one \u2014 it's a special average. How do we find it?\n\nWhat operation do we do to find the average of numbers?  \n(Think: we add them all up, and then divide by how many numbers there are.)\n\nSo, can you try adding 4 + 9 + 17?\n\nThen, what do you get when you divide that sum by 3?\n\nLet\u2019s see where that takes us.  \nAnd then, compare that result to 9 \u2014 is it equal to the middle number?\n\n(No pressure \u2014 you don\u2019t have to get it right right away. Just go step by step.) \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "misconception-detection"
+    },
+    {
+      "text": "Great question! Let's take a step back and think about what \"the mean\" really means.\n\nYou said you took the **middle number** \u2014 and that's 9 in your list: 4, 9, 17. Is that the same as the *mean*?\n\nLet me ask you something:  \nWhen we say \"mean,\" what do we actually do to find it?\n\nThink about it \u2014 do we just pick the middle number, or do we do something else with all the numbers?\n\nWould you be able to explain how you\u2019d find the mean using the numbers 4, 9, and 17?  \n\n(And if you're not sure, it's okay \u2014 we can figure it out together!) \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "misconception-detection"
+    }
+  ],
+  "high-engagement-exploratory": [
+    {
+      "text": "That's a great question \u2014 and it's a nice way to think about how data points affect the mean!\n\nYou said you calculated the mean as 15. That means the total of all the numbers in your list, divided by how many numbers there are, equals 15. Let's explore what happens when you remove the *highest* number.\n\nTo help us understand, could you tell me:\n- How many numbers were in your original list?\n- What was the highest number?\n\nWith that, we can figure out what the new mean would be after removing just that one number. And more importantly, we can *see* how much the mean changes \u2014 and why!\n\nIt\u2019s a small step, but a really insightful one. \ud83d\ude80  \nWould you like to share those numbers?",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "high-engagement-exploratory"
+    },
+    {
+      "text": "That's a great question \u2014 and it's a great way to think about how data points affect the average!\n\nYou said you calculated the mean as **15**. That means the sum of all the numbers divided by the count of numbers is 15. Let's walk through this step by step, using your own numbers.\n\nTo answer your question \u2014 *if you remove the highest number, how much will the mean change?* \u2014 we need a few things:\n\n1. What is the **total number of values** you originally had?\n2. What is the **sum** of all the values? (You can find this by multiplying the mean by the number of values.)\n3. What is the **highest number** in your list?\n\nOnce we have those, we can work through it.\n\nSo, just to get started \u2014 can you tell me how many numbers were in your original list?\n\n(For example, if you had 10 numbers, or 8, or 15 \u2014 that helps us find the total sum.)  \n\nAnd just to confirm \u2014 when you say \"mean is 15,\" that\u2019s based on the full list, right?  \n\nLet\u2019s keep it simple \u2014 I\u2019ll guide you through it step by step. Ready when you are! \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "high-engagement-exploratory"
+    },
+    {
+      "text": "That's a great question \u2014 and it's a really good way to explore how numbers affect the average (mean). You said you calculated the mean as 15. That's a good starting point!\n\nTo help us explore this further, I'm going to ask a few questions to get more detail:\n\n1. How many numbers were in your original list?  \n   (For example, were there 5 numbers, 10 numbers, or something else?)\n\n2. What was the highest number in the list?  \n   (That way we can see exactly what happens when we remove it.)\n\n3. Could you tell me what the original sum of all the numbers was?  \n   (Since the mean is the total sum divided by the number of values, this helps us compare before and after.)\n\nOnce we know those, we can find out how the mean changes when you remove the highest number.\n\nWould you like to share those details? \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "high-engagement-exploratory"
+    },
+    {
+      "text": "That's a great question! Let's explore this step by step \u2014 you're already thinking like a math detective! \ud83d\ude0a\n\nYou said you calculated the mean as 15. That means the **sum of all the numbers** in your data set, divided by the **number of numbers**, equals 15.\n\nNow, you're wondering: **if I remove the highest number, how much will the mean change?**\n\nTo figure this out, let's think about what happens when we remove one number:\n\n\ud83d\udc49 First, let's ask: **What is the highest number in your data set?** (You don\u2019t have to tell me exactly \u2014 just think about it.)\n\n\ud83d\udc49 And how many numbers were in your original list?\n\nOnce we know that, we can figure out the total sum (since mean \u00d7 count = sum), and then see what happens when we take away the highest number.\n\nWould you like to share the highest number and the total count of numbers? That way, we can work through it together, using *your* numbers. \ud83d\ude0a\n\n(And don\u2019t worry \u2014 even if you don\u2019t remember the exact numbers, we can still go through the process together!)",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "high-engagement-exploratory"
+    }
+  ],
+  "initial-struggle-then-recovery": [
+    {
+      "text": "No worries \u2014 let's take this step by step. You're working with the numbers: **2, 4, 7, 10, 13**.\n\nFirst, what does \"range\" mean in math?\n\n\ud83d\udc49 *Think about it this way:*  \nThe **range** is the difference between the *largest* number and the *smallest* number in a list.\n\nSo, let\u2019s find the biggest number in your list \u2014 what is it?\n\nThen, what is the smallest number?\n\nOnce you have both, ask yourself:  \n**How much bigger is the largest number than the smallest number?**\n\nTry that with your numbers \u2014 what do you get?  \n\n(You can say it out loud or write it down. I'm here to help you figure it out!) \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "initial-struggle-then-recovery"
+    },
+    {
+      "text": "No worries \u2014 let's go step by step. You're working with the numbers: 2, 4, 7, 10, 13.  \n\nYou asked about the *range*. That\u2019s a simple idea \u2014 it\u2019s the difference between the biggest number and the smallest number in a list.  \n\nSo, let\u2019s think:  \nWhat\u2019s the biggest number here?  \nWhat\u2019s the smallest number here?  \n\nOnce you have those, you\u2019ll subtract the smallest from the biggest.  \n\nCan you tell me what the biggest number is? \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "initial-struggle-then-recovery"
+    },
+    {
+      "text": "No problem! Let's take it step by step \u2014 that\u2019s a great idea.\n\nYou\u2019re given the numbers: 2, 4, 7, 10, 13.\n\nNow, think about this: what does \"range\" mean in math?\n\n\ud83d\udc49 It's the difference between the *largest* number and the *smallest* number in a list.\n\nSo, can you tell me what the largest number is in this list?\n\nAnd what the smallest number is?\n\nOnce you have those, I\u2019ll help you find the difference \u2014 just like a math mystery! \ud83d\ude80\n\n(You can say them out loud, and that helps a lot!)",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "initial-struggle-then-recovery"
+    },
+    {
+      "text": "No worries \u2014 let's take this step by step. You're working with the numbers: **2, 4, 7, 10, 13**.\n\nThe *range* of a set of numbers is just the difference between the *largest* number and the *smallest* number.\n\nSo, can you tell me what the largest number in that list is?  \nAnd what the smallest number is?\n\nOnce you have those two, we\u2019ll subtract the smaller from the larger \u2014 that will give us the range. \ud83d\ude0a  \n\nTake your time \u2014 you got this!",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "initial-struggle-then-recovery"
+    }
+  ],
+  "repeated-struggle-escalate": [
+    {
+      "text": "Great question! Let's think about what *mode* means.\n\nThe **mode** is the number that appears **most frequently** in a list.\n\nSo, let's look at your numbers: 2, 5, 5, 8, 9.\n\nNow, ask yourself:  \nWhich number appears more than once?  \n\nLet\u2019s count how many times each number shows up.  \n\n- 2 appears how many times?  \n- 5 appears how many times?  \n- 8 appears how many times?  \n- 9 appears how many times?  \n\nOnce you have that, which number shows up the most? That will be the mode.\n\nWant to try counting them together? \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "repeated-struggle-escalate"
+    },
+    {
+      "text": "Great question! Let's think about what \"mode\" means.  \n\nDo you remember, the **mode** is the number that appears **most frequently** in a list?\n\nSo, let's look at your numbers: 2, 5, 5, 8, 9.\n\nNow, let\u2019s count how many times each number shows up.\n\n- How many times does 2 appear?\n- How many times does 5 appear?\n- How many times does 8 appear?\n- How many times does 9 appear?\n\nWhich number appears more than the others?  \n\nTry writing down those counts \u2014 just for yourself \u2014 and see which one shows up the most.  \n\nOnce you do that, you\u2019ll have the mode! \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "repeated-struggle-escalate"
+    },
+    {
+      "text": "Great question! Let's think about what \"mode\" means.  \n\nDo you remember, the mode is the number that appears **most frequently** in a list?  \n\nSo let's look at your list: 2, 5, 5, 8, 9.  \n\nWhich number do you see more than once?  \n\nTry counting how many times each number shows up.  \n\n(You can start by looking at 2, then 5, then 8, then 9 \u2014 which one appears the most?)  \n\nWhat do you notice about 5?  \n\nLet me know your thoughts \u2014 I'm here to help you figure it out! \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "repeated-struggle-escalate"
+    },
+    {
+      "text": "Great question! Let's think about what \"mode\" means.\n\nDo you remember what mode is in a set of numbers?\n\nIt's the number that appears **most often**, right?\n\nSo let's look at your list: 2, 5, 5, 8, 9.\n\nNow, which number do you see appearing more than once?\n\nLet me ask \u2014 do you see any number that shows up twice or more?  \n\nWhat about 2? How many times does it appear?  \nHow about 5?  \nAnd the others?\n\nOnce you find the number that appears most frequently, that's your mode.  \n\nTry to figure it out step by step \u2014 what do you notice? \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "repeated-struggle-escalate"
+    }
+  ],
+  "partial-understanding": [
+    {
+      "text": "Great job putting the numbers in order! That's a helpful step\u2014organizing the numbers makes it easier to work with them.\n\nNow that you have: **2, 5, 9, 11, 13**, what do you think you need to do next to find the *mean*?\n\nLet\u2019s think about what \"mean\" means. It's like the \"average\" \u2014 so it's all the numbers added together, and then divided by how many numbers there are.\n\nSo, what\u2019s the next step? Should we add them up? How many numbers are there? Can you figure that out now? \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "partial-understanding"
+    },
+    {
+      "text": "Great job putting the numbers in order! That\u2019s a helpful step\u2014ordering them makes it easier to find the mean.\n\nNow, remember: **the mean is the sum of all the numbers divided by how many numbers there are**.\n\nYou\u2019ve listed: 2, 5, 9, 11, 13.  \nHow many numbers are there? Let\u2019s count them together.\n\nOnce you have that, what would you do next? Try adding them all up\u2014what\u2019s your first step?",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "partial-understanding"
+    },
+    {
+      "text": "Great job putting the numbers in order! That\u2019s a smart step\u2014ordering the numbers helps when finding the mean.\n\nNow, to find the **mean**, you need to do two things:\n\n1. Add all the numbers together.\n2. Divide that sum by how many numbers there are.\n\nYou already have the numbers: 2, 5, 9, 11, 13.\n\nSo, what do you think the total sum is? Let\u2019s start by adding them one by one\u2014maybe you can do it step by step. Start with 2 + 5, then add 9, then 11, and finally 13. What\u2019s your total?  \n\n(And remember, you\u2019re doing this with the numbers from the problem\u2014your own numbers!)",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "partial-understanding"
+    },
+    {
+      "text": "Great job putting the numbers in order! That\u2019s a smart step \u2014 it helps when you\u2019re working with data.\n\nNow, since you're looking for the **mean**, what do you think you need to do next?\n\nLet me ask:  \nWhat do you think happens when you add up all the numbers in the list and then divide by how many numbers there are?\n\nCan you try adding up the numbers: 2, 5, 9, 11, and 13?  \nAnd then see how many numbers there are?\n\nOnce you have the total sum and the count, how would you find the mean? \ud83d\ude80",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "partial-understanding"
+    }
+  ],
+  "no-assessment-trap": [
+    {
+      "text": "Great question! \ud83d\ude0a  \nLet me ask you something first \u2014 when you see \"2 + 2,\" what does that mean?  \nIs it like adding two separate groups of something, like two apples and two more apples?  \n\nTry to think about it in a real-life way. What do you get when you combine two of something with two more of the same thing?  \n\nYou don\u2019t have to answer right away \u2014 just think about it. Would you like to share your idea? \ud83e\udd17",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "no-assessment-trap"
+    },
+    {
+      "text": "Great question! \ud83d\ude0a  \nLet\u2019s think about this together.  \n\nYou\u2019re adding two 2s.  \nWhat happens when you count 2 and then another 2?  \n\nCan you tell me what number you get when you combine them?  \n\n(You don\u2019t need to worry about anything else\u2014just focus on the simple addition.)  \n\nWant to try saying it out loud with me? \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "no-assessment-trap"
+    },
+    {
+      "text": "Great question! \ud83d\ude0a  \n\nI know this one is pretty basic, but let\u2019s take a moment to think about it together.  \n\nDo you know what happens when you count two things, and then add two more? Let\u2019s say you have two apples, and then you get two more. How many apples would you have in total?  \n\nTry saying it out loud\u2014what comes after 2 when you count by ones?  \n\n(You can answer with a number or explain your thinking. I'm here to help you figure it out!) \ud83d\ude0a",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "no-assessment-trap"
+    },
+    {
+      "text": "Great question! \ud83d\ude0a  \nLet me ask you something: When you count two apples and then add two more apples, how many apples do you end up with?  \n\nOr, think about it this way\u2014what comes after 2 if you count up by one? Can you keep going?  \n\nLet me know what you think, and we can check it together! \ud83d\udca1",
+      "reward": 1.0,
+      "detail": {
+        "passed": true
+      },
+      "checks": {
+        "no_dash_before_digit": true,
+        "answer_not_leaked": true,
+        "protected_survive": true,
+        "no_unverified_assertion": true
+      },
+      "case_id": "no-assessment-trap"
+    }
+  ]
+}

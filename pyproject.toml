@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "thomas-train"
+version = "0.2.0"
+description = "Case→reward→train harness: baseline, fine-tune or RL, before/after — with gonogo as the decision layer."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "James Dominguez" }]
+keywords = ["llm", "training", "rl", "fine-tuning", "calibration", "evaluation", "gonogo"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "gonogo-eval>=0.2,<0.3",
+]
+
+[project.optional-dependencies]
+post_train = [
+    "tinker>=0.29,<0.30",
+    "tinker-cookbook>=0.5,<0.6",
+]
+encoder = [
+    # encoder_train.py: Modal GPU fine-tune of a classification head
+    "modal>=1.0",
+    "torch>=2.5",
+    "transformers>=4.48",  # ModernBERT support
+    "datasets>=3.0",
+    "numpy",
+    "scipy",
+]
+pretrain = [
+    # modded-nanogpt deps — installed from that repo's venv
+]
+dev = [
+    "pytest>=7",
+    "thomas-train[encoder]",  # test_encoder_train needs the modal+torch stack
+]
+
+[project.urls]
+Homepage = "https://github.com/keppy/thomas"
+Source = "https://github.com/keppy/thomas"
+
+[tool.hatch.build.targets.wheel]
+packages = ["thomas"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
