@@ -47,6 +47,11 @@ python examples/banking77_predict.py --model-dir examples/artifacts/banking77-en
     "I lost my card" "why was I charged twice"   # the published artifact, on CPU
 ```
 
+![thomas: the published Banking77 artifact, interactive on CPU](docs/demo.gif)
+
+Two inputs, two verdicts with calibrated confidence — the artifact this
+repo's Banking77 canary was scored with.
+
 ## Encoder fine-tune (Modal)
 
 The cheapest path, and the one behind the Banking77 result above: a small
