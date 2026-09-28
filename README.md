@@ -21,6 +21,37 @@ One reward function, three consumers: the gonogo card, the RL gradient, and the
 before/after comparison all call the same `score_text`, so they see the same
 numbers.
 
+## Where thomas sits
+
+thomas is one tile of a small ecosystem that takes a task from *which model?*
+to *ship it or not*:
+
+```
+your task ──► evalroute ─ the right (model, effort) arm for the task,
+                │         by measured cost per verified success
+                ▼
+your cases ──► thomas ── a calibrated model trained against your bar;
+                │         gonogo scores the baseline and the after
+                ▼
+              gonogo ── ship it, ship it behind a threshold, or walk away
+```
+
+- **[thomas](https://github.com/keppy/thomas)** (this repo) — the training
+  harness. When the verdict is *not yet*: one case set, one `score_text`,
+  a baseline card, a training run (encoder SFT on Modal, or RL), the same
+  bar at both ends.
+- **[gonogo](https://github.com/keppy/gonogo)** — the decision layer, and the
+  root of the map. Any agent, your real cases, a target; the verdict comes
+  with the interval behind it.
+- **[evalroute](https://github.com/keppy/hermes-plugin-evalroute)** — the
+  routing layer: classify the task, hand back the arm with measured
+  cost-per-verified-success behind it, rate the outcome so the table keeps
+  learning.
+- **The Hermes plugins** — the same three, inside your agent's session:
+  [gonogo](https://github.com/keppy/hermes-plugin-gonogo) where the number
+  happened, [thomas](https://github.com/keppy/hermes-plugin-thomas) with GPU
+  launches behind the approval gate, `/route` before the first turn.
+
 [![Fine-tuning an encoder and getting a go/no-go verdict — thomas + gonogo](https://i.ytimg.com/vi/ozWITnaJtf4/maxresdefault.jpg)](https://youtu.be/ozWITnaJtf4)
 
 **Video (40:33):** the whole pipeline worked live: plan, contract, a subagent building the thomas training path, two dead runs and one false alarm, and the Modal fine-tune of [ModernBERT-small-v2](https://huggingface.co/johnnyboycurtis/ModernBERT-small-v2) on an L4 for under $1, scored on the gonogo Banking77 canary. [Writeup](https://www.keppylab.com/blog/2026/09/21/banking77-canary-872-pass-two-dead-runs-one-false-alarm/).
