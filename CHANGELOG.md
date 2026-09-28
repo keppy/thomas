@@ -5,6 +5,27 @@ thomas is pre-1.0: minor versions can break the Python API. The artifact and
 case contract is versioned separately in `docs/CONTRACT.md`; any change to it
 is called out here with the contract version.
 
+## [0.2.1] - 2026-09-28
+
+Contract version **1** remains unchanged: no artifact or case field changed.
+Requires `gonogo-eval>=0.3,<0.4` (the `compare()` interval and grouped
+pairing changed there; the 0.2 line is not compatible).
+
+- `post_train` now requires an untouched `eval_task` for before/after results
+  (a source-breaking change for callers without an eval split), rejects
+  obvious split overlap, verifies its dotted `score_text_fn` is the exact
+  Task scorer, and checks all serialized Tinker case fields, ids, prompts,
+  and several reward probes after deserialization. These checks do not prove
+  arbitrary scorer equivalence. Every attempt gets a unique log path;
+  missing current-run checkpoints fail instead of inheriting an old sampler.
+- TRL GRPO rewards use stable case IDs instead of prompt matching, with one
+  visible-text extraction path for local and Modal completions. Programmatic
+  `run_grpo_modal()` hydrates its app before `.remote()` and rejects GPU
+  overrides because its Modal function is fixed to A100-40GB.
+- Encoder configs reject invalid hyperparameters before training. A text-free
+  Banking77 per-case prediction receipt, source/artifact digest manifest, and
+  CPU replay are tracked; the trained model remains local-only and unpublished.
+
 ## [0.2.0] - 2026-09-23
 
 Contract version **1**.

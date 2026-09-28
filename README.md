@@ -17,9 +17,9 @@ Barrow of Downton Abbey (it's the undercrogue that earns its place).*
                                   └──► gonogo: verdict, interval, operating point
 ```
 
-One reward function, three consumers: the gonogo card, the RL gradient, and the
-before/after comparison all call the same `score_text`, so they see the same
-numbers.
+For RL tasks, the baseline, gradient reward and before/after eval use the
+same domain `score_text`. Encoder classification is a separate exact-label
+metric (`prediction == expected`); it does not call a Task's `score_text`.
 
 ## Where thomas sits
 
@@ -27,38 +27,54 @@ thomas is one tile of a small ecosystem that takes a task from *which model?*
 to *ship it or not*:
 
 ```
-your task ──► evalroute ─ the right (model, effort) arm for the task,
-                │         by measured cost per verified success
+your task ──► evalroute ─ choose a (model, effort) arm;
+                │         measured where available, priors marked
                 ▼
-your cases ──► thomas ── a calibrated model trained against your bar;
-                │         gonogo scores the baseline and the after
+your cases ──► thomas ── train on labels (encoder) or score_text (RL);
+                │         evaluate on untouched cases with gonogo
                 ▼
-              gonogo ── ship it, ship it behind a threshold, or walk away
+              gonogo ── ship it, test a threshold on fresh cases, or walk away
 ```
 
 - **[thomas](https://github.com/keppy/thomas)** (this repo) — the training
-  harness. When the verdict is *not yet*: one case set, one `score_text`,
-  a baseline card, a training run (encoder SFT on Modal, or RL), the same
-  bar at both ends.
+  harness. RL shares `score_text` across training and held-out evaluation;
+  encoder SFT instead learns labels and needs a separate held-out evaluation.
 - **[gonogo](https://github.com/keppy/gonogo)** — the decision layer, and the
   root of the map. Any agent, your real cases, a target; the verdict comes
   with the interval behind it.
 - **[evalroute](https://github.com/keppy/hermes-plugin-evalroute)** — the
   routing layer: classify the task, hand back the arm with measured
-  cost-per-verified-success behind it, rate the outcome so the table keeps
-  learning.
+  costs where available and priors otherwise; collect ratings to prioritize
+  the next controlled batch.
 - **The Hermes plugins** — the same three, inside your agent's session:
-  [gonogo](https://github.com/keppy/hermes-plugin-gonogo) where the number
-  happened, [thomas](https://github.com/keppy/hermes-plugin-thomas) with GPU
-  launches behind the approval gate, `/route` before the first turn.
+  [gonogo](https://github.com/keppy/hermes-plugin-gonogo) for decisions,
+  [thomas](https://github.com/keppy/hermes-plugin-thomas) with a human approval
+  hook on its training tool, and `/route` before the first turn.
 
 [![Fine-tuning an encoder and getting a go/no-go verdict — thomas + gonogo](https://i.ytimg.com/vi/ozWITnaJtf4/maxresdefault.jpg)](https://youtu.be/ozWITnaJtf4)
 
 **Video (40:33):** the whole pipeline worked live: plan, contract, a subagent building the thomas training path, two dead runs and one false alarm, and the Modal fine-tune of [ModernBERT-small-v2](https://huggingface.co/johnnyboycurtis/ModernBERT-small-v2) on an L4 for under $1, scored on the gonogo Banking77 canary. [Writeup](https://www.keppylab.com/blog/2026/09/21/banking77-canary-872-pass-two-dead-runs-one-false-alarm/).
 
 - 87.2% [82.5%, 90.8%] pass rate against a 95% target → **AUTOMATE WITH REVIEW**
-- at confidence ≥ 0.91: 98.3% precision [95.1%, 99.4%] on 71% of cases, the rest routed to a human
+- at confidence ≥ 0.91: 98.3% precision [95.2%, 99.4%] on 71% of cases, the rest routed to a human
 - calibration error 0.03 after temperature scaling; +10.0 points over the TF-IDF baseline on the same 250 cases (p < 0.001)
+
+**Artifact availability:** the trained 146 MB Banking77 model and test-case
+JSONL are local-only, ignored files; neither is in this repository or available
+at an advertised download URL. No model has been published by this change.
+The checked-in [250-case prediction receipt](examples/receipts/banking77_predictions.jsonl)
+contains only case id, expected label, predicted label and calibrated confidence
+(no customer text). `examples/banking77_receipt.py` replays the gonogo decision
+from it; with your own original artifact and cases, it checks every CPU prediction
+against the receipt. The [provenance manifest](examples/receipts/banking77_provenance.json)
+identifies the locally checked model files, source CSVs, cases JSONL and receipt
+by SHA-256; the script enforces those hashes when the local sources are present.
+Hashes identify checked bytes, not independent attestation of a training run.
+The receipt verifies the reported decision, **not** inference from a
+public checkpoint. The dataset fetch/split logic is in
+`examples/banking77_encoder.py`; Modal training costs money, and replay does not.
+The operating threshold was selected on this same 250-case set and needs a
+fresh holdout before deployment.
 
 ## Install
 
@@ -74,8 +90,12 @@ Not on PyPI yet; install from a clone.
 
 ```bash
 python examples/banking77_encoder.py --dry-run     # free: prints the config and the split, spends nothing
-python examples/banking77_predict.py --model-dir examples/artifacts/banking77-enc \
-    "I lost my card" "why was I charged twice"   # the published artifact, on CPU
+python examples/banking77_receipt.py             # replay the 250-case prediction receipt, CPU
+# If you have the original local model and derived cases (not shipped):
+python examples/banking77_receipt.py --model-dir examples/artifacts/banking77-enc \
+    --cases-path examples/banking77_cases.jsonl   # verify all 250 predictions
+python examples/banking77_predict.py --model-dir YOUR_LOCAL_ARTIFACT \
+    "I lost my card"                              # CPU inference
 ```
 
 ## Encoder fine-tune (Modal)
@@ -101,6 +121,7 @@ The artifact is a HuggingFace `save_pretrained` dir plus `label2id.json`,
 
 ```python
 import thomas
+from dataclasses import replace
 from thomas.domains import tutor, tutor_scenarios
 
 task = thomas.Task(
@@ -113,14 +134,25 @@ task = thomas.Task(
     case_id=tutor.case_id,
 )
 assert task.oracle_check()            # the env is winnable by construction
-
-before = thomas.baseline(task)        # sample the base model, gonogo card (Tinker)
-run = thomas.post_train(task, max_steps=5, score_text_fn="thomas.domains.tutor.score")
-print(thomas.compare(before, run.after).summary())
+# Illustrative only: for a real interval use substantially more untouched cases.
+train_task = replace(task, cases=task.cases[:-2])
+eval_task = replace(task, cases=task.cases[-2:])
+# Costs Tinker credits; get operator approval before invoking.
+run = thomas.post_train(train_task, eval_task=eval_task, max_steps=5,
+                        score_text_fn="thomas.domains.tutor.score",
+                        oracle_reply_fn="thomas.domains.tutor.oracle",
+                        render_messages_fn="thomas.domains.tutor.render",
+                        case_id_fn="thomas.domains.tutor.case_id",
+                        from_json_fn="thomas.domains.tutor.cases_from_json")
+print(thomas.compare(run.before, run.after).summary())
 ```
 
-`post_train` and every Modal entry point spend money. Each one prints its
-config before launching.
+`post_train` and every Modal entry point spend money. Inspect the config and
+approve **before invoking** these APIs; printing a config is not an approval
+gate. `post_train` requires a disjoint `eval_task` and rejects overlapping
+case ids or rendered prompts. It also requires `score_text_fn` to resolve to
+the exact `Task.score_text` callable used for the baseline. The before/after
+cards are measured on that untouched eval set, not training cases.
 
 ### Example domains
 
@@ -141,7 +173,9 @@ modal run -m thomas.trl_grpo --domain tutor \
 ```
 
 Saves a LoRA adapter to a Modal volume; metrics go to the
-W&B project `thomas` (Modal secret `wandb`).
+W&B project `thomas` (Modal secret `wandb`). The programmatic
+`run_grpo_modal(gpu=...)` path is fixed to A100-40GB and rejects other GPU
+names; it does not dynamically change Modal's allocation.
 
 Known constraints (each cost a run to learn):
 
@@ -155,7 +189,9 @@ Known constraints (each cost a run to learn):
   resident model and breaks the budget.
 - **Reward functions receive chat format:** conversational completions arrive
   as a list of `{"role", "content"}` messages, not a string. `trl_grpo`
-  unwraps them; custom reward fns must too.
+  extracts visible assistant text (strips `<think>`) on both local and Modal
+  paths, then scores using the dataset's stable `case_id`. Matching the first
+  case with the same prompt is wrong when distinct cases share wording.
 - **VLM-class models (e.g. Qwen3.5) are broken upstream** in TRL colocate —
   weight-sync name remapping for `*ForConditionalGeneration` architectures
   (huggingface/trl#5269). thomas ships a monkeypatch prefix remap, but prefer
@@ -169,7 +205,7 @@ thomas and gonogo agree on six things: case ids, reward → `passed` / `score`,
 the confidence definition (`max(softmax(logits / T))` over the full label set),
 the artifact a training run leaves on disk, eval splits, and the gonogo calls
 thomas depends on. They're written down and versioned in **[docs/CONTRACT.md](docs/CONTRACT.md)**. It's contract version 1,
-tested against gonogo-eval `>=0.2,<0.3`.
+tested against gonogo-eval `>=0.3,<0.4`.
 
 ```python
 from thomas.contract import read_artifact   # stdlib only, no torch needed

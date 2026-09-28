@@ -44,12 +44,22 @@ with `label` a non-empty string.
 
 ## 2. Reward → gonogo
 
-`score_text` is the only scoring path. The baseline card, the RL loop and the
-before/after comparison all call it, so they see identical numbers.
+For **RL Tasks**, `score_text` is the scoring path. Baseline, TRL/Tinker
+reward and before/after comparisons call it. `post_train` checks that the
+training dotted-path callable is identical to `Task.score_text`, and requires
+an untouched `eval_task`; it rejects duplicate/overlapping ids and overlapping
+rendered prompts and checks the Tinker case round-trip before paid calls.
+TRL rewards use stable `case_id` metadata,
+not prompt matching (distinct cases may share prompt text).
 
-When thomas hands results to gonogo, a case **passes** when
-`reward >= 0.99`, and the reward travels as gonogo's `score`. The `detail` is
-stringified into gonogo's `detail`. Pairing across runs uses `case_id`.
+The **encoder** path does not use Task or `score_text`: its exact-label
+comparison (`prediction == expected`) and calibrated confidence feed gonogo.
+Do not describe the encoder and RL paths as one shared reward function.
+
+For RL Tasks handed to gonogo, a case **passes** when `reward >= 0.99`;
+that reward becomes gonogo's `score`, and the detail is stringified. Encoder
+cases pass by exact label match and carry a binary score. Pairing across runs
+uses `case_id`.
 
 ## 3. Confidence
 

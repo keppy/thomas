@@ -15,13 +15,40 @@ the run, we read it with ``get_last_checkpoint`` and pass it to
 from __future__ import annotations
 
 import asyncio
+import importlib
+import json
 import os
+import re
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from .task import Task
 from .baseline import BaselineResult, baseline, _resolve_renderer
+
+
+def _validate_eval_split(train_task: Task, eval_task: Task) -> None:
+    """Reject obvious training/eval leakage before any sampling or training."""
+    if eval_task.score_text is not train_task.score_text:
+        raise ValueError("eval_task must use the same score_text function as training")
+    train_ids = [train_task.case_id(c) for c in train_task.cases]
+    eval_ids = [eval_task.case_id(c) for c in eval_task.cases]
+    if len(set(train_ids)) != len(train_ids) or len(set(eval_ids)) != len(eval_ids):
+        raise ValueError("case ids must be unique within each split")
+    if set(train_ids) & set(eval_ids):
+        raise ValueError("training and eval case ids overlap")
+    def prompts(task):
+        return {json.dumps(task.render_messages(c), sort_keys=True, ensure_ascii=False)
+                for c in task.cases}
+    if prompts(train_task) & prompts(eval_task):
+        raise ValueError("training and eval prompts overlap (even under different ids)")
+
+
+def _new_log_path(task_name: str) -> str:
+    """Unique per paid run; never read a checkpoint left by an older attempt."""
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "-", task_name).strip(".-") or "task"
+    return f"./logs/thomas-{safe_name}-{uuid.uuid4().hex}"
 
 
 @dataclass
@@ -40,6 +67,7 @@ def post_train(
     task: Task,
     model: str | None = None,
     *,
+    eval_task: Task | None = None,
     lora_rank: int = 32,
     group_size: int = 4,
     max_steps: int = 5,
@@ -68,11 +96,21 @@ def post_train(
 
     **Ask before spending credits.** This makes API calls that cost money.
     """
-    log_path = f"./logs/thomas-{task.name}"
+    if eval_task is None:
+        raise ValueError("eval_task is required: before/after must use untouched cases")
+    _validate_eval_split(task, eval_task)
+    if not score_text_fn or not callable(task.score_text):
+        raise ValueError("score_text_fn must identify task.score_text by dotted import path")
+    module, dot, attr = score_text_fn.rpartition(".")
+    if not dot or getattr(importlib.import_module(module), attr) is not task.score_text:
+        raise ValueError("score_text_fn must resolve to the same function as task.score_text")
+    _validate_builder_roundtrip(task, from_json_fn, oracle_reply_fn,
+                                render_messages_fn, case_id_fn)
+    log_path = _new_log_path(task.name)
 
-    # --- 1. Baseline ---
-    print("--- Baseline (before training) ---")
-    before = baseline(task, model=model, target=target)
+    # --- 1. Baseline (untouched eval cases only) ---
+    print("--- Baseline (before training; untouched eval set) ---")
+    before = baseline(eval_task, model=model, max_tokens=max_tokens, target=target)
 
     # --- 2. Train ---
     from dotenv import load_dotenv
@@ -95,6 +133,7 @@ def post_train(
     dataset_builder = ThomasDatasetBuilder(
         batch_size=min(group_size * 4, task.n),
         group_size=group_size,
+        num_batches=max_steps,
         model_name_for_tokenizer=model_name,
         renderer_name=renderer_name,
         cases_json=cases_json,
@@ -144,12 +183,11 @@ def post_train(
     if sampler_path:
         print(f"\n  Trained sampler: {sampler_path}")
     else:
-        print(f"\n  WARNING: no sampler checkpoint found in {log_path}")
-        print("  After-baseline will use the base model (no LoRA).")
+        raise RuntimeError(f"no trained sampler checkpoint found in {log_path}; cannot report after-eval")
 
     # --- 3. After: re-sample the trained model ---
     print("\n--- Baseline (after training) ---")
-    after = _baseline_with_sampler(task, model_name, sampler_path, target)
+    after = _baseline_with_sampler(eval_task, model_name, sampler_path, target, max_tokens=max_tokens)
 
     return PostTrainResult(
         task_name=task.name,
@@ -198,9 +236,9 @@ async def _sample_with_client(task, sampling_client, renderer, stop, max_tokens=
 
 
 def _baseline_with_sampler(
-    task: Task, model_name: str, sampler_path: str | None, target: float
+    task: Task, model_name: str, sampler_path: str, target: float, *, max_tokens: int = 512
 ) -> BaselineResult:
-    """Run the baseline against a trained sampler (or base model if no path)."""
+    """Run untouched eval against the trained sampler only."""
     from dotenv import load_dotenv
     if not os.environ.get("TINKER_API_KEY"):
         for p in [Path.cwd() / ".env", Path.home() / ".env"]:
@@ -212,16 +250,13 @@ def _baseline_with_sampler(
     from tinker_cookbook import renderers
 
     sc = tinker.ServiceClient()
-    if sampler_path:
-        sampling_client = sc.create_sampling_client(model_path=sampler_path)
-    else:
-        sampling_client = sc.create_sampling_client(base_model=model_name)
+    sampling_client = sc.create_sampling_client(model_path=sampler_path)
 
     renderer_name, renderer = _resolve_renderer(model_name)
     stop = renderer.get_stop_sequences()
 
     per_case, outputs_by_id = asyncio.run(
-        _sample_with_client(task, sampling_client, renderer, stop)
+        _sample_with_client(task, sampling_client, renderer, stop, max_tokens=max_tokens)
     )
 
     # Gonogo card
@@ -254,6 +289,49 @@ def _baseline_with_sampler(
         per_case=per_case, report=report,
         console_url=sc.get_console_url(),
     )
+
+
+def _validate_builder_roundtrip(task: Task, from_json_fn: str, oracle_reply_fn: str,
+                                render_messages_fn: str, case_id_fn: str) -> None:
+    """Check the deserialized Tinker case/scorer/prompt before any API call."""
+    from .task import default_case_id, default_render_messages
+
+    def resolve(path):
+        module, dot, name = path.rpartition(".")
+        if not dot:
+            raise ValueError(f"expected dotted callable path: {path!r}")
+        fn = getattr(importlib.import_module(module), name)
+        if not callable(fn):
+            raise ValueError(f"not callable: {path!r}")
+        return fn
+
+    serialized = _serialize_cases(task)
+    original_payload = json.loads(serialized)
+    restored = resolve(from_json_fn)(serialized)
+    if len(restored) != task.n:
+        raise ValueError("Tinker case round-trip changed case count")
+    render = resolve(render_messages_fn) if render_messages_fn else default_render_messages
+    cid = resolve(case_id_fn) if case_id_fn else default_case_id
+    if oracle_reply_fn and resolve(oracle_reply_fn) is not task.oracle_reply:
+        raise ValueError("oracle_reply_fn differs from Task.oracle_reply")
+    for original, case, payload in zip(task.cases, restored, original_payload):
+        try:
+            restored_payload = case.__dict__ if hasattr(case, "__dict__") else dict(case)
+            # Check *all* serialized fields, not just the oracle reply. A
+            # deserializer can preserve the oracle reward while changing how
+            # wrong answers score (e.g. dropping an expected-label field).
+            if json.loads(json.dumps(restored_payload)) != payload:
+                raise ValueError("serialized case fields changed")
+            replies = [task.oracle_reply(original), "", "__thomas_invalid_reply__"]
+            same = (str(cid(case)) == str(task.case_id(original))
+                    and render(case) == task.render_messages(original)
+                    and all(task.score_text(case, text) == task.score_text(original, text)
+                            for text in replies))
+        except Exception as exc:
+            raise ValueError(f"Tinker case round-trip cannot score/render: {exc}") from exc
+        if not same:
+            raise ValueError(f"Tinker case round-trip changed reward, id or prompt: "
+                             f"{task.case_id(original)}")
 
 
 def _serialize_cases(task: Task) -> str:

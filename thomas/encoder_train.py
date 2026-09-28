@@ -82,6 +82,20 @@ class EncoderTrainConfig:
     seed: int = 0
     output_dir: str = "thomas-encoder-run"
 
+    def __post_init__(self):
+        for name in ("num_labels", "epochs", "batch_size", "max_length", "calib_size"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+                raise ValueError(f"{name} must be a positive integer")
+        if self.num_labels < 2:
+            raise ValueError("num_labels must be >= 2")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int) or self.seed < 0:
+            raise ValueError("seed must be a non-negative integer")
+        if isinstance(self.lr, bool) or not isinstance(self.lr, (int, float)) or not math.isfinite(self.lr) or self.lr <= 0:
+            raise ValueError("lr must be finite and positive")
+        if not isinstance(self.model_name, str) or not self.model_name.strip():
+            raise ValueError("model_name must be a non-empty string")
+
 
 @dataclass
 class EncoderTrainResult:

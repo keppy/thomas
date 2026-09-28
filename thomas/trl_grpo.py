@@ -46,42 +46,58 @@ class GRPOResult:
     config: dict[str, Any] = field(default_factory=dict)
 
 
+def _completion_text(completion: str | list[dict]) -> str:
+    """Score visible assistant content on both local and Modal paths."""
+    if isinstance(completion, str):
+        text = completion
+    elif isinstance(completion, list):
+        text = "\n".join(m.get("content", "") for m in completion
+                         if isinstance(m, dict) and m.get("role") == "assistant"
+                         and isinstance(m.get("content"), str))
+    else:
+        raise ValueError("completion must be text or an assistant message list")
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+def _case_map(cases, case_id):
+    by_id = {}
+    for case in cases:
+        cid = str(case_id(case))
+        if not cid or cid in by_id:
+            raise ValueError(f"case ids must be unique and nonempty: {cid!r}")
+        by_id[cid] = case
+    return by_id
+
+def _reward_for_cases(cases, case_id, score_text):
+    by_id = _case_map(cases, case_id)
+    def reward_fn(prompts, completions, **kwargs):
+        ids = kwargs.get("case_id")
+        if ids is None or len(ids) != len(completions):
+            raise ValueError("TRL reward call must pass one case_id per completion")
+        rewards = []
+        for cid, completion in zip(ids, completions):
+            if str(cid) not in by_id:
+                raise ValueError(f"unknown GRPO case_id: {cid!r}")
+            reward, _ = score_text(by_id[str(cid)], _completion_text(completion))
+            rewards.append(float(reward))
+        return rewards
+    return reward_fn
+
 def _build_dataset(task: Task):
     """Build a TRL-compatible dataset from a Task's cases."""
     from datasets import Dataset
 
+    _case_map(task.cases, task.case_id)
     rows = []
     for case in task.cases:
         messages = [{"role": "system", "content": task.system_prompt}]
         messages += task.render_messages(case)
-        rows.append({"prompt": messages})
+        rows.append({"prompt": messages, "case_id": str(task.case_id(case))})
     return Dataset.from_list(rows)
 
 
 def _make_reward_fn(task: Task):
-    """Create a reward function that calls task.score_text on completions."""
-
-    def reward_fn(prompts, completions, **kwargs):
-        rewards = []
-        for prompt, completion in zip(prompts, completions):
-            user_msg = next(
-                (m["content"] for m in prompt if m["role"] == "user"), ""
-            )
-            case = next(
-                (c for c in task.cases
-                 if any(m.get("content") == user_msg
-                        for m in task.render_messages(c)
-                        if m.get("role") == "user")),
-                None,
-            )
-            if case is None:
-                rewards.append(0.0)
-            else:
-                reward, _ = task.score_text(case, completion)
-                rewards.append(float(reward))
-        return rewards
-
-    return reward_fn
+    """Create a reward function keyed by stable case id."""
+    return _reward_for_cases(task.cases, task.case_id, task.score_text)
 
 
 def run_grpo(
@@ -262,43 +278,14 @@ def _grpo_train(
             return render_fn(case)
         return [{"role": "user", "content": getattr(case, "prompt", str(case))}]
 
-    rows = [{"prompt": [{"role": "system", "content": system_prompt}] + _render(c)}
-            for c in cases]
+    def _id(case):
+        return case_id_fn(case) if case_id_fn else getattr(case, "id")
+
+    _case_map(cases, _id)
+    rows = [{"prompt": [{"role": "system", "content": system_prompt}] + _render(c),
+             "case_id": str(_id(c))} for c in cases]
     dataset = Dataset.from_list(rows)
-
-    # Reward function
-    def _completion_text(completion):
-        # TRL passes conversational completions as a list of messages;
-        # plain completions as a string. Score on the assistant text.
-        if isinstance(completion, str):
-            text = completion
-        else:
-            text = "\n".join(
-                m.get("content", "") for m in completion
-                if isinstance(m, dict) and m.get("role") == "assistant"
-            )
-        # Judge the visible reply, not hidden reasoning: a thinking model's
-        # <think> block can contain the answer without the student seeing it.
-        return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
-
-    def reward_fn(prompts, completions, **kwargs):
-        rewards = []
-        for prompt, completion in zip(prompts, completions):
-            user_msg = next(
-                (m["content"] for m in prompt if m["role"] == "user"), ""
-            )
-            case = next(
-                (c for c in cases
-                 if any(m.get("content") == user_msg
-                        for m in _render(c) if m.get("role") == "user")),
-                None,
-            )
-            if case is None:
-                rewards.append(0.0)
-            else:
-                r, _ = score_fn(case, _completion_text(completion))
-                rewards.append(float(r))
-        return rewards
+    reward_fn = _reward_for_cases(cases, _id, score_fn)
 
     # GRPO config
     from peft import LoraConfig
@@ -442,8 +429,12 @@ def run_grpo_modal(
     ``_case_id_fn_path`` set to dotted import paths so Modal can resolve
     them at runtime.
 
-    **Ask before spending credits.** This runs on Modal GPU.
+    **Ask before spending credits.** This runs on Modal GPU. The function is
+    fixed to A100-40GB; another gpu request is rejected rather than logged as
+    if Modal allocated it.
     """
+    if gpu != "A100-40GB":
+        raise ValueError("run_grpo_modal is allocated A100-40GB; gpu override is not supported")
     score_fn_path = getattr(task, "_score_fn_path", None)
     if score_fn_path is None:
         raise ValueError(
@@ -465,25 +456,26 @@ def run_grpo_modal(
     print(f"  LoRA rank: {lora_rank}, group_size: {group_size}, steps: {max_steps}")
     print(f"  Cases: {task.n}")
 
-    result = _grpo_train.remote(
-        cases_json=cases_json,
-        score_fn_path=score_fn_path,
-        render_fn_path=render_fn_path,
-        case_id_fn_path=case_id_fn_path,
-        system_prompt=task.system_prompt,
-        task_name=task.name,
-        model_path=model_path,
-        vllm_endpoint=vllm_endpoint,
-        lora_rank=lora_rank,
-        group_size=group_size,
-        max_steps=max_steps,
-        learning_rate=learning_rate,
-        max_tokens=max_tokens,
-        temperature=temperature,
-        output_path=output_path,
-        wandb_project=wandb_project,
-        wandb_name=wandb_name,
-    )
+    with _grpo_app.run():
+        result = _grpo_train.remote(
+            cases_json=cases_json,
+            score_fn_path=score_fn_path,
+            render_fn_path=render_fn_path,
+            case_id_fn_path=case_id_fn_path,
+            system_prompt=task.system_prompt,
+            task_name=task.name,
+            model_path=model_path,
+            vllm_endpoint=vllm_endpoint,
+            lora_rank=lora_rank,
+            group_size=group_size,
+            max_steps=max_steps,
+            learning_rate=learning_rate,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            output_path=output_path,
+            wandb_project=wandb_project,
+            wandb_name=wandb_name,
+        )
 
     return GRPOResult(
         task_name=task.name,

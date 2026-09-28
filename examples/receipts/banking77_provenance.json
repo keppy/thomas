@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "scope": "Locally checked source bytes for the 250-case CPU receipt; model weights and case text are not shipped. Hashes are identifiers, not independent attestation of the training run.",
+  "source": {
+    "repository": "PolyAI-LDN/task-specific-datasets",
+    "test_csv_sha256": "d12d6e3bc4c3103966ae786dc435913c0c563dfa328f5a3646d0e62cfeeb474d",
+    "train_csv_sha256": "b06e26ac675513959a63135f11b94ea7786ed02da65db93a5650d8838cbc664b",
+    "pilot_selection": "random.Random(11).sample(test_rows, 250), msg-%04d IDs; examples/banking77_encoder.py:build_splits",
+    "cases_jsonl_sha256": "e862100cf23683497ed3cf419ab490494516fe1f9ee11b03fb604c9d57c89368"
+  },
+  "model_files_sha256": {
+    "config.json": "122ad73c1facade09df3b66b1e9051daf809bb6ed2aad176940f5211573f04df",
+    "label2id.json": "b5166b359a4533dc509f3c116b7f8bf36f0276c3688430a3a9e421e6921f0408",
+    "metrics.json": "da10e3acef288e33bbad3a88ab5925aad098e01a4da587d79cc153e07c121f01",
+    "model.safetensors": "d3e736ca3d78c4dae2cdb45a2b7fea6e642825bf847792e0f2a6ac97d743e21e",
+    "temperature.json": "f0db5fc16c3005113ce4f1bd08d5672ef27b6a4329e8b5ba9cb4c1293461bb0a",
+    "tokenizer.json": "218484396a9d08293b108b0e5ea31e0a1b7c801dcbed35a821deb392d2fe9bb4",
+    "tokenizer_config.json": "98d4afbe42765cdd596b199112f968a42f524de45fe7e443c5fb26b3e5b99107"
+  },
+  "predictions_jsonl_sha256": "12269a949588efad47cff4454f74c4d1dea62d74d934beab9b130dec97e5b9fe"
+}

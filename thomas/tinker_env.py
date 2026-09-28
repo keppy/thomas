@@ -141,6 +141,7 @@ class ThomasDataset(RLDataset):
         batch_size: int,
         group_size: int,
         renderer: renderers.Renderer,
+        num_batches: int | None = None,
     ) -> None:
         if not task.cases:
             raise ValueError("no cases")
@@ -150,6 +151,9 @@ class ThomasDataset(RLDataset):
         self.batch_size = min(batch_size, len(task.cases))
         self.group_size = group_size
         self.renderer = renderer
+        self.num_batches = num_batches if num_batches is not None else math.ceil(len(task.cases) / self.batch_size)
+        if self.num_batches < 1:
+            raise ValueError("num_batches must be positive")
 
     def get_batch(self, index: int) -> Sequence[EnvGroupBuilder]:
         start = (index * self.batch_size) % len(self.task.cases)
@@ -163,7 +167,7 @@ class ThomasDataset(RLDataset):
         ]
 
     def __len__(self) -> int:
-        return math.ceil(len(self.task.cases) / self.batch_size)
+        return self.num_batches
 
 
 # --- Dataset builder (chz) ---------------------------------------------------
@@ -186,6 +190,7 @@ class ThomasDatasetBuilder(RLDatasetBuilder):
     score_text_fn: str = ""  # dotted path to score_text (optional)
     oracle_reply_fn: str = ""  # dotted path to oracle_reply (optional)
     task_name: str = "thomas"
+    num_batches: int = 1
 
     async def __call__(self) -> tuple[ThomasDataset, None]:
         from .task import Task, default_render_messages, default_case_id
@@ -216,6 +221,7 @@ class ThomasDatasetBuilder(RLDatasetBuilder):
                 batch_size=self.batch_size,
                 group_size=self.group_size,
                 renderer=renderer,
+                num_batches=self.num_batches,
             ),
             None,
         )
