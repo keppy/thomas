@@ -26,7 +26,7 @@ from .task import Task, ScoreFn
 from .baseline import baseline, baseline_from_outputs, BaselineResult
 from .compare import compare, Comparison
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 # post_train requires tinker; import lazily
 def post_train(*args, **kwargs):
