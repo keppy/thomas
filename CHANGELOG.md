@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.3] - 2026-10-05
+
+evalroute lane-encoder recipe learns from train F's learning curve.
+
+- `examples/evalroute_lane_encoder.py`: `select_training_rows` — per-lane cap on `aug:` rows
+  (`--aug-cap`, default max(5, the lane's real-row count); lanes with zero real rows keep all
+  scaffolding), real rows repeated `--real-weight` times (default 3); `--seeds 7,8,9` trains
+  per-seed dirs, writes `seeds.json` (mean ± sd), copies the best-calibrated seed (lowest |T−1|)
+  to the artifact root; `--curve` trains on 0/50/100% of real rows and writes
+  `learning_curve.json`; `--dry-run` prints the selection. `metrics.json` gains `selection`,
+  `seeds`, `chosen_seed`, `eval_accuracy_mean/sd`. On the v1 data, three seeds: 71.9% ± 6.6
+  (v1 single seed 63.2%) with no new rows.
+- `encoder_train`: when rows repeat a text (weighting by repetition), the calibration split is
+  drawn over distinct texts and every copy stays out of training; refuses `calib_size` ≥
+  distinct texts. An index draw let copies of held-out rows into training and T collapsed to
+  0.003. All-distinct inputs (the contract's banking77 split) are unchanged.
+
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 thomas is pre-1.0: minor versions can break the Python API. The artifact and
 case contract is versioned separately in `docs/CONTRACT.md`; any change to it
