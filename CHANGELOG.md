@@ -5,6 +5,19 @@ thomas is pre-1.0: minor versions can break the Python API. The artifact and
 case contract is versioned separately in `docs/CONTRACT.md`; any change to it
 is called out here with the contract version.
 
+## [0.2.2] - 2026-10-04
+
+### Added
+
+- `examples/evalroute_lane_encoder.py`: recipe for evalroute's lane encoder over
+  `encoder_train.train_classifier`. `--backend local` (default; CPU is enough at a few
+  hundred rows — v1 trained in 30 s) or `modal`; evaluates on a held-out real-only
+  JSONL after training and adds `eval_accuracy`, `eval_n`, `eval_per_lane`,
+  `defer_below` (max-coverage confidence cut at ≥ 0.9 held-out accuracy),
+  `coverage_at_defer`, `train_sources` to `metrics.json`; writes
+  `eval_predictions.jsonl`. Prints counts and ids, never row text. Contract
+  version unchanged (additive keys).
+
 ## [0.2.1] - 2026-09-28
 
 Contract version **1** remains unchanged: no artifact or case field changed.

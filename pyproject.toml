@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "thomas-train"
-version = "0.2.1"
+version = "0.2.2"
 description = "Case→reward→train harness: baseline, fine-tune or RL, before/after — with gonogo as the decision layer."
 readme = "README.md"
 requires-python = ">=3.11"
