@@ -234,10 +234,33 @@ def train_classifier(rows: list[tuple[str, str]], config: EncoderTrainConfig) ->
     # Held-out calibration split (never trained on). Seeded so the
     # banking77 driver reproduces the contract's Random(7) split by
     # passing seed=7 with the full train set.
+    #
+    # Drawn by index when every text is distinct (the contract's split).
+    # When rows repeat a text — a driver up-weighting rows by repetition,
+    # or a noisy export — an index draw puts copies of a calib row into
+    # training and T collapses toward 0 on a memorised split. So: pick
+    # calib *texts*, then keep every copy of those texts out of training.
     rng = random.Random(config.seed)
-    calib_idx = set(rng.sample(range(len(rows)), config.calib_size))
-    train_rows = [r for i, r in enumerate(rows) if i not in calib_idx]
-    calib_rows = [rows[i] for i in sorted(calib_idx)]
+    texts = [r[0] for r in rows]
+    if len(set(texts)) == len(texts):
+        calib_idx = set(rng.sample(range(len(rows)), config.calib_size))
+        train_rows = [r for i, r in enumerate(rows) if i not in calib_idx]
+        calib_rows = [rows[i] for i in sorted(calib_idx)]
+    else:
+        distinct = sorted(set(texts), key=texts.index)  # first-occurrence order, deterministic
+        if config.calib_size >= len(distinct):
+            raise ValueError(
+                f"calib_size={config.calib_size} must be smaller than the "
+                f"{len(distinct)} distinct texts in rows (rows repeat; the calib "
+                "split is drawn over distinct texts so repeats cannot leak into training)")
+        calib_texts = set(rng.sample(distinct, config.calib_size))
+        seen: set[str] = set()
+        calib_rows = []
+        for r in rows:
+            if r[0] in calib_texts and r[0] not in seen:
+                calib_rows.append(r)
+                seen.add(r[0])
+        train_rows = [r for r in rows if r[0] not in calib_texts]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(config.seed)  # reproducible head init + dropout
