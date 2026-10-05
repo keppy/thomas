@@ -31,12 +31,24 @@ box needs no Modal account:
     # copy the runs/lane-1 directory back (model + sidecars + eval metrics)
 
 No account, no credentials — the box just needs the two JSONL files.
+
+Selection rules
+---------------
+
+Training rows are selected before training: per lane, all real and seed rows
+are kept, and ``aug:`` rows are capped at ``max(5, that lane's real count)``
+(except a lane with zero real rows keeps all its aug rows — paraphrases are
+the only thing that makes such a lane exist). Real rows are repeated
+``--real-weight`` times so they outweigh the paraphrase dialect, and
+``--seeds``/``--curve`` report mean ± sd so a single-seed swing on a small
+eval set can't be mistaken for signal.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 import time
 from collections import Counter
@@ -66,6 +78,69 @@ def _sources(cases: list[dict]) -> dict[str, int]:
         cid = c["id"]
         counts["ledger" if ":" not in cid else cid.split(":", 1)[0]] += 1
     return dict(sorted(counts.items()))
+
+
+def _prefix(cid: str) -> str:
+    return "ledger" if ":" not in cid else cid.split(":", 1)[0]
+
+
+def _row_kind(cid: str) -> str:
+    p = _prefix(cid)
+    if p == "aug":
+        return "aug"
+    if p == "seed":
+        return "seed"
+    return "real"
+
+
+def select_training_rows(cases: list[dict], aug_cap: int | None = None,
+                         real_weight: int = 3) -> tuple[list[tuple[str, str]], dict]:
+    """Cap aug rows per lane against that lane's real rows, up-weight real rows.
+
+    Real = any id whose prefix is not ``aug``/``seed``. Per lane: keep all
+    real and seed rows; keep the first N aug rows in file order, where
+    N = aug_cap if given else max(5, real_count); a lane with zero real rows
+    keeps all its aug rows (scaffolding). Real rows are repeated real_weight
+    times; aug and seed rows once. Returns (rows, selection_report).
+    """
+    per_lane: dict[str, dict] = {}
+    for lane in sorted({c["label"] for c in cases}):
+        per_lane[lane] = {"real": 0, "aug_kept": 0, "aug_dropped": 0, "seed": 0}
+
+    real_by_lane: dict[str, list[dict]] = {}
+    aug_by_lane: dict[str, list[dict]] = {}
+    for c in cases:
+        kind = _row_kind(c["id"])
+        if kind == "real":
+            real_by_lane.setdefault(c["label"], []).append(c)
+        elif kind == "aug":
+            aug_by_lane.setdefault(c["label"], []).append(c)
+
+    rows: list[tuple[str, str]] = []
+    for lane, report in per_lane.items():
+        reals = real_by_lane.get(lane, [])
+        augs = aug_by_lane.get(lane, [])
+        cap = aug_cap if aug_cap is not None else max(5, len(reals))
+        if len(reals) == 0:
+            cap = len(augs)  # zero real rows: scaffolding, keep all aug
+        kept, dropped = augs[:cap], augs[cap:]
+        report.update(real=len(reals), aug_kept=len(kept), aug_dropped=len(dropped))
+        rows.extend((c["text"], c["label"]) for c in kept)
+        rows.extend((c["text"], c["label"]) for c in reals for _ in range(real_weight))
+        seed_count = sum(1 for c in cases if c["label"] == lane and _row_kind(c["id"]) == "seed")
+        report["seed"] = seed_count
+        rows.extend((c["text"], c["label"]) for c in cases
+                    if c["label"] == lane and _row_kind(c["id"]) == "seed")
+    report = {"per_lane": per_lane, "real_weight": real_weight, "aug_cap": aug_cap}
+    return rows, report
+
+
+def _print_selection(report: dict) -> None:
+    print("  selection (real_weight {rw}, aug_cap {ac}):".format(
+        rw=report["real_weight"], ac=report["aug_cap"]))
+    for lane, d in report["per_lane"].items():
+        print(f"    lane {lane}: real {d['real']} x{report['real_weight']}, "
+              f"aug kept {d['aug_kept']} (dropped {d['aug_dropped']}), seed {d['seed']}")
 
 
 def _pick_device():
@@ -178,6 +253,46 @@ def evaluate(out_dir: str, cases: list[dict], config_kwargs: dict, elapsed_s: fl
     print(f"  wrote {predictions_path} and updated {metrics_path}")
 
 
+CURVE_FRACTIONS = [0.0, 0.5, 1.0]
+
+
+def _train_one(rows: list[tuple[str, str]], config_kwargs: dict, train_sources,
+               eval_cases, out_dir: str, device: str) -> dict:
+    """Train once into out_dir, evaluate, return the seed-metric subset."""
+    import shutil
+
+    from thomas.encoder_train import EncoderTrainConfig, train_classifier
+
+    config = EncoderTrainConfig(**{**config_kwargs, "output_dir": out_dir})
+    t0 = time.time()
+    result = train_classifier(rows, config)
+    elapsed = time.time() - t0
+    evaluate(out_dir, eval_cases, {**config_kwargs, "train_sources": train_sources},
+             elapsed, device)
+    metrics_path = Path(out_dir) / "metrics.json"
+    with open(metrics_path, encoding="utf-8") as f:
+        metrics = json.load(f)
+    subset = {k: metrics[k] for k in (
+        "eval_accuracy", "eval_per_lane", "defer_below", "coverage_at_defer",
+        "calib_accuracy", "temperature")}
+    return subset
+
+
+def _curve_real_subset(train_cases: list[dict], fraction: float,
+                       seed: int) -> list[dict]:
+    """Seeded shuffle over real ids, keep fraction of them; aug/seed rows kept."""
+    import random
+
+    real = [c for c in train_cases if _row_kind(c["id"]) == "real"]
+    other = [c for c in train_cases if _row_kind(c["id"]) != "real"]
+    ids = sorted(c["id"] for c in real)
+    rng = random.Random(f"{seed}-curve")
+    rng.shuffle(ids)
+    n = int(round(fraction * len(ids)))
+    keep = set(ids[:n])
+    return [c for c in real if c["id"] in keep] + other
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--train", required=True)
@@ -189,6 +304,14 @@ def main() -> int:
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--calib-size", type=int, default=40)
     parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument("--seeds", default=None,
+                        help="comma list of seeds (default: [--seed])")
+    parser.add_argument("--aug-cap", type=int, default=None,
+                        help="per-lane aug row cap (default: max(5, lane real count))")
+    parser.add_argument("--real-weight", type=int, default=3,
+                        help="times each real row is repeated in training (>= 1)")
+    parser.add_argument("--curve", action="store_true",
+                        help="train {0,50,100}%% of real rows first, write learning_curve.json")
     parser.add_argument("--backend", choices=("local", "modal"), default="local")
     parser.add_argument("--run-name", default="evalroute-lane")
     parser.add_argument("--dry-run", action="store_true",
@@ -220,6 +343,18 @@ def main() -> int:
             return 1
 
     train_counts = dict(sorted(Counter(c["label"] for c in train_cases).items()))
+    if args.real_weight < 1:
+        print(f"refusing: --real-weight must be >= 1, got {args.real_weight}",
+              file=sys.stderr)
+        return 1
+    seeds = ([args.seed] if args.seeds is None
+             else [int(s) for s in args.seeds.split(",") if s.strip()])
+    if args.backend == "modal" and len(seeds) > 1:
+        print("refusing: multi-seed is a local-backend feature; run Modal seeds one at a time",
+              file=sys.stderr)
+        return 1
+    selection_rows, selection = select_training_rows(
+        train_cases, args.aug_cap, args.real_weight)
     config_kwargs = dict(
         model_name=args.model, num_labels=len(labels),
         epochs=args.epochs, batch_size=args.batch_size, lr=args.lr,
@@ -235,6 +370,12 @@ def main() -> int:
     print(f"  sources: {config_kwargs['train_sources']}")
     print(f"  model: {args.model}, epochs: {args.epochs}, lr: {args.lr}, "
           f"batch_size: {args.batch_size}, calib_size: {args.calib_size}, seed: {args.seed}")
+    _print_selection(selection)
+    if args.curve:
+        print(f"  curve: will pre-train on {len(CURVE_FRACTIONS)} real-row fractions "
+              f"{CURVE_FRACTIONS} (first seed only)")
+    if len(seeds) > 1:
+        print(f"  seeds: {seeds}")
     if args.dry_run:
         if errors:
             print("[dry-run] refusal checks above WOULD fail; would exit 1.")
@@ -246,17 +387,92 @@ def main() -> int:
         from thomas.encoder_train import EncoderTrainConfig, train_classifier
 
         train_sources = config_kwargs.pop("train_sources")
-        config = EncoderTrainConfig(**config_kwargs)
-        t0 = time.time()
-        result = train_classifier(
-            [(c["text"], c["label"]) for c in train_cases], config
-        )
-        elapsed = time.time() - t0
-        print(f"  trained on {device} in {elapsed:.1f}s "
-              f"(temperature {result.temperature:.4f}, "
-              f"calib acc {result.metrics['calib_accuracy']:.4f})")
-        evaluate(args.out, eval_cases, {**config_kwargs, "train_sources": train_sources},
-                 elapsed, device)
+
+        # Learning curve first (--curve): extra models on reduced real rows.
+        if args.curve:
+            curve_points = []
+            for frac in CURVE_FRACTIONS:
+                subset_cases = _curve_real_subset(train_cases, frac, seeds[0])
+                cur_rows, _ = select_training_rows(
+                    subset_cases, args.aug_cap, args.real_weight)
+                curve_dir = str(Path(args.out) / f"curve-{int(frac * 100)}")
+                sub = _train_one(cur_rows, {**config_kwargs}, train_sources,
+                                 eval_cases, curve_dir, device)
+                curve_points.append({
+                    "real_fraction": frac, "n_train": len(cur_rows),
+                    "eval_accuracy": sub["eval_accuracy"],
+                    "eval_per_lane": sub["eval_per_lane"],
+                })
+                print(f"  curve {int(frac * 100)}%: n_train={len(cur_rows)} "
+                      f"eval_accuracy={sub['eval_accuracy']:.4f}")
+                shutil.rmtree(curve_dir, ignore_errors=True)
+            Path(args.out).mkdir(parents=True, exist_ok=True)
+            with open(Path(args.out) / "learning_curve.json", "w", encoding="utf-8") as f:
+                json.dump(curve_points, f, indent=2)
+
+        seed_metrics: list[dict] = []
+        for s in seeds:
+            rows, sel_report = select_training_rows(
+                train_cases, args.aug_cap, args.real_weight)
+            seed_dir = str(Path(args.out) / f"seed-{s}") if len(seeds) > 1 else args.out
+            if len(seeds) == 1:
+                _print_selection(sel_report)
+            sub = _train_one(rows, {**config_kwargs, "seed": s}, train_sources,
+                             eval_cases, seed_dir, device)
+            sub["seed"] = s
+            seed_metrics.append(sub)
+            print(f"  seed {s}: eval_accuracy={sub['eval_accuracy']:.4f} "
+                  f"temperature={sub['temperature']:.4f}")
+
+        def _pop_sd(vals: list[float]) -> float:
+            if len(vals) < 2:
+                return 0.0
+            mu = sum(vals) / len(vals)
+            return (sum((v - mu) ** 2 for v in vals) / len(vals)) ** 0.5
+
+        seeds_path = Path(args.out) / "seeds.json"
+        if len(seeds) > 1:
+            seeds_doc: dict = {"seeds": seed_metrics}
+            seeds_doc["mean"] = {"eval_accuracy": sum(
+                m["eval_accuracy"] for m in seed_metrics) / len(seed_metrics)}
+            seeds_doc["sd"] = {"eval_accuracy": _pop_sd(
+                [m["eval_accuracy"] for m in seed_metrics])}
+            lanes = sorted(seed_metrics[0]["eval_per_lane"])
+            seeds_doc["mean"]["per_lane_acc"] = {
+                l: sum(m["eval_per_lane"][l]["acc"] for m in seed_metrics) / len(seed_metrics)
+                for l in lanes}
+            seeds_doc["sd"]["per_lane_acc"] = {
+                l: _pop_sd([m["eval_per_lane"][l]["acc"] for m in seed_metrics])
+                for l in lanes}
+            with open(seeds_path, "w", encoding="utf-8") as f:
+                json.dump(seeds_doc, f, indent=2)
+            best = min(seed_metrics, key=lambda m: (
+                abs(m["temperature"] - 1.0), -m["eval_accuracy"], m["seed"]))
+            chosen = best["seed"]
+            # Copy the chosen seed's artifact up to <out>/ (seed dirs remain).
+            for item in Path(args.out, f"seed-{chosen}").iterdir():
+                if item.is_file():
+                    shutil.copy2(item, Path(args.out) / item.name)
+            mean_acc = seeds_doc["mean"]["eval_accuracy"]
+            sd_acc = seeds_doc["sd"]["eval_accuracy"]
+            print(f"seeds: {len(seed_metrics)}  eval acc {mean_acc:.4f} ± {sd_acc:.4f}  "
+                  f"chosen seed {chosen} (|T−1| = {abs(best['temperature'] - 1.0):.4f})")
+        else:
+            chosen = seeds[0]
+            with open(seeds_path, "w", encoding="utf-8") as f:
+                json.dump({"seeds": seed_metrics}, f, indent=2)
+            mean_acc = seed_metrics[0]["eval_accuracy"]
+            sd_acc = 0.0
+        metrics_path = Path(args.out) / "metrics.json"
+        with open(metrics_path, encoding="utf-8") as f:
+            metrics = json.load(f)
+        metrics["seeds"] = seeds
+        metrics["chosen_seed"] = chosen
+        metrics["eval_accuracy_mean"] = mean_acc
+        metrics["eval_accuracy_sd"] = sd_acc
+        metrics["selection"] = selection
+        with open(metrics_path, "w", encoding="utf-8") as f:
+            json.dump(metrics, f, indent=2)
     else:
         if not args.yes:
             answer = input("\nProceed with the Modal GPU run? [y/N] ")

@@ -175,6 +175,39 @@ class TestTrainClassifier:
         m1 = json.loads((Path(outs[1]) / "metrics.json").read_text())
         assert m0["step_losses"] == m1["step_losses"]
 
+    def test_repeated_texts_never_leak_into_calib(self, tiny_model_dir, tiny_rows, tmp_path):
+        """Rows repeated for weighting: every copy of a calib text stays out of training.
+
+        An index draw would put copies of a held-out row into the train split and
+        temperature would collapse toward 0 on a memorised calib set (seen in the
+        lane-encoder v2 probe: T = 0.003 with real rows repeated x3)."""
+        rows = tiny_rows * 3  # each text appears 3 times
+        config = EncoderTrainConfig(
+            model_name=tiny_model_dir, num_labels=2, epochs=1,
+            batch_size=4, lr=2e-4, calib_size=8, seed=3, output_dir=str(tmp_path / "rep"),
+        )
+        # Re-derive the split exactly as train_classifier does and check the invariant.
+        import random
+        rng = random.Random(config.seed)
+        texts = [r[0] for r in rows]
+        distinct = sorted(set(texts), key=texts.index)
+        calib_texts = set(rng.sample(distinct, config.calib_size))
+        train_rows = [r for r in rows if r[0] not in calib_texts]
+        assert not ({r[0] for r in train_rows} & calib_texts)
+        assert len(train_rows) == len(rows) - 3 * config.calib_size
+
+        result = train_classifier(rows, config)
+        assert result.metrics["calib_size"] == 8  # one copy per held-out text, not 8 of 24
+        assert result.temperature > 0.05, "T collapsed: calib rows leaked into training"
+
+    def test_calib_over_distinct_texts_raises(self, tiny_model_dir, tiny_rows):
+        config = EncoderTrainConfig(
+            model_name=tiny_model_dir, num_labels=2, epochs=1,
+            batch_size=4, calib_size=40, seed=3, output_dir="unused",
+        )
+        with pytest.raises(ValueError, match="distinct texts"):
+            train_classifier(tiny_rows * 2, config)
+
     def test_sanity_pass_catches_nan(self, tiny_model_dir, tiny_rows, tmp_path, monkeypatch):
         """A NaN first loss aborts before any real training (poisoned model)."""
         import torch
