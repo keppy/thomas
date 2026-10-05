@@ -165,3 +165,131 @@ def test_modal_requires_yes(tmp_path, tiny_model, monkeypatch):
         sys.argv = old_argv
     assert code != 0
     assert sys.modules.get("modal") is sentinel
+
+
+# --- train 2026-10-H brief 01: selection, multi-seed, curve ------------------
+
+
+def test_selection_caps_aug_and_weights_real():
+    from lane_encoder_common import LABELS, evalroute_lane_encoder
+
+    cases = []
+    for i in range(10):
+        for lane in LABELS:
+            cases.append({"id": f"aug:{i}", "text": f"aug {lane} {i}", "label": lane})
+    # real: 2 in lane_a, 0 in lane_b, 4 in lane_c (contributor prefix counts as real)
+    for i in range(2):
+        cases.append({"id": f"taskset:{i}", "text": f"real a {i}", "label": "lane_a"})
+    for i in range(4):
+        cases.append({"id": f"keppy:{i}", "text": f"real c {i}", "label": "lane_c"})
+    for lane in LABELS:
+        cases.append({"id": "seed:0", "text": f"seed {lane}", "label": lane})
+
+    rows, report = evalroute_lane_encoder.select_training_rows(cases)
+    pl = report["per_lane"]
+    assert pl["lane_a"]["aug_kept"] == 5 and pl["lane_a"]["aug_dropped"] == 5
+    assert pl["lane_a"]["real"] == 2
+    assert pl["lane_b"]["aug_kept"] == 10 and pl["lane_b"]["aug_dropped"] == 0  # zero real
+    assert pl["lane_b"]["real"] == 0
+    assert pl["lane_c"]["aug_kept"] == 5 and pl["lane_c"]["real"] == 4  # max(5, 4)
+    assert all(pl[l]["seed"] == 1 for l in LABELS)
+    assert report["real_weight"] == 3 and report["aug_cap"] is None
+
+    counts: dict = {}
+    for text, label in rows:
+        counts[(text, label)] = counts.get((text, label), 0) + 1
+    assert counts[("real a 0", "lane_a")] == 3  # real rows repeated 3x
+    assert counts[("seed lane_b", "lane_b")] == 1  # seed rows once
+    assert counts[("aug lane_c 0", "lane_c")] == 1
+    assert ("aug lane_a 9", "lane_a") not in counts  # capped away
+
+    rows2, report2 = evalroute_lane_encoder.select_training_rows(
+        cases, aug_cap=2, real_weight=1)
+    pl2 = report2["per_lane"]
+    assert pl2["lane_a"]["aug_kept"] == 2
+    assert pl2["lane_b"]["aug_kept"] == 10  # zero-real scaffolding ignores the cap
+    assert pl2["lane_c"]["aug_kept"] == 2
+    counts2: dict = {}
+    for text, _ in rows2:
+        counts2[text] = counts2.get(text, 0) + 1
+    assert counts2["real a 0"] == 1
+
+
+def test_single_seed_unchanged_shape(tmp_path, tiny_model):
+    from lane_encoder_common import _run_main
+
+    code, out_dir = _run_main(tmp_path, tiny_model, [])
+    assert code == 0
+    for name in ("config.json", "label2id.json", "temperature.json", "metrics.json"):
+        assert (out_dir / name).exists()
+    assert not (out_dir / "seed-7").exists()
+    metrics = json.loads((out_dir / "metrics.json").read_text(encoding="utf-8"))
+    assert metrics["seeds"] == [7]
+    assert metrics["chosen_seed"] == 7
+    assert metrics["eval_accuracy_sd"] == 0.0
+    assert "selection" in metrics
+    assert (out_dir / "seeds.json").exists()
+
+
+def test_multi_seed_picks_best_calibrated(tmp_path, tiny_model):
+    from lane_encoder_common import _run_main
+
+    code, out_dir = _run_main(tmp_path, tiny_model, ["--seeds", "1,2"])
+    assert code == 0
+    seeds_doc = json.loads((out_dir / "seeds.json").read_text(encoding="utf-8"))
+    assert len(seeds_doc["seeds"]) == 2
+    assert "mean" in seeds_doc and "sd" in seeds_doc
+    assert (out_dir / "seed-1" / "metrics.json").exists()
+    assert (out_dir / "seed-2").exists()
+    metrics = json.loads((out_dir / "metrics.json").read_text(encoding="utf-8"))
+    per_seed = {m["seed"]: m for m in seeds_doc["seeds"]}
+    expected = min(per_seed, key=lambda s: (
+        abs(per_seed[s]["temperature"] - 1.0), -per_seed[s]["eval_accuracy"], s))
+    assert metrics["chosen_seed"] == expected
+    for name in ("label2id.json", "temperature.json"):
+        chosen_dir = out_dir / f"seed-{expected}"
+        assert (out_dir / name).read_bytes() == (chosen_dir / name).read_bytes()
+    assert abs(metrics["eval_accuracy_mean"] - seeds_doc["mean"]["eval_accuracy"]) < 1e-9
+
+
+def test_curve_writes_three_points_and_cleans_up(tmp_path, tiny_model):
+    from lane_encoder_common import _run_main
+
+    code, out_dir = _run_main(tmp_path, tiny_model, ["--curve"])
+    assert code == 0
+    curve = json.loads((out_dir / "learning_curve.json").read_text(encoding="utf-8"))
+    assert [p["real_fraction"] for p in curve] == [0.0, 0.5, 1.0]
+    assert [p["n_train"] for p in curve] == sorted(p["n_train"] for p in curve)
+    assert len({p["n_train"] for p in curve}) == 3
+    assert all(p["eval_per_lane"].keys() == {"lane_a", "lane_b", "lane_c"} for p in curve)
+    assert not list(out_dir.glob("curve-*"))
+
+
+def test_dry_run_prints_selection(tmp_path, tiny_model, capsys):
+    from lane_encoder_common import _run_main, LABELS
+
+    code, out_dir = _run_main(tmp_path, tiny_model, ["--dry-run"])
+    assert code == 0
+    assert not out_dir.exists()
+    out = capsys.readouterr().out
+    assert "selection" in out
+    for lane in LABELS:
+        assert f"lane {lane}:" in out
+
+
+def test_multi_seed_refused_on_modal(tmp_path, tiny_model, monkeypatch, capsys):
+    from lane_encoder_common import _run_main, evalroute_lane_encoder
+
+    def _boom(*a, **k):
+        raise AssertionError("modal entry point called")
+
+    monkeypatch.setattr(
+        evalroute_lane_encoder, "run_encoder_train_modal", _boom, raising=False)
+    import thomas.encoder_train as et
+    monkeypatch.setattr(et, "run_encoder_train_modal", _boom)
+    code, out_dir = _run_main(
+        tmp_path, tiny_model,
+        ["--backend", "modal", "--seeds", "1,2", "--dry-run", "--yes"])
+    assert code == 1
+    assert "multi-seed is a local-backend feature" in capsys.readouterr().err
+    assert not out_dir.exists()
