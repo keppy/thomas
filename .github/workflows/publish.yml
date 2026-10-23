@@ -1,0 +1,49 @@
+# Publish thomas-train to PyPI with Trusted Publishing, so every release file
+# carries a PyPI publish attestation (this repo, this workflow, this commit).
+# https://docs.pypi.org/trusted-publishers/  https://docs.pypi.org/attestations/
+#
+# One-time setup on pypi.org: a (pending) publisher for project thomas-train:
+#   owner keppy, repository thomas, workflow publish.yml, environment pypi.
+# Then a pushed tag v<version> builds, tests and publishes. No token anywhere.
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: tag matches the package version
+        run: |
+          py=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)
+          init=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' thomas/__init__.py)
+          test "v$py" = "$GITHUB_REF_NAME" && test "$py" = "$init" \
+            || { echo "tag $GITHUB_REF_NAME, pyproject $py, __version__ $init"; exit 1; }
+      - name: tests (CPU torch; the encoder tests need the [encoder] stack)
+        run: |
+          uv venv
+          uv pip install --torch-backend cpu ".[encoder]" pytest
+          .venv/bin/python -m pytest -q
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # Trusted Publishing + attestation signing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      # Attestations are generated and uploaded by default.
+      - uses: pypa/gh-action-pypi-publish@release/v1

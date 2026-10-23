@@ -79,12 +79,14 @@ fresh holdout before deployment.
 ## Install
 
 ```bash
-pip install -e .                    # core + gonogo
-pip install -e ".[encoder]"         # + encoder fine-tune on Modal (torch, transformers, modal)
-pip install -e ".[post_train]"      # + Tinker RL
+pip install thomas-train                 # core + gonogo
+pip install "thomas-train[encoder]"      # + encoder fine-tune on Modal (torch, transformers, modal)
+pip install "thomas-train[post_train]"   # + Tinker RL
 ```
 
-Not on PyPI yet; install from a clone.
+Installs as `thomas-train` (the plain `thomas` name on PyPI belongs to an unrelated
+project); imports as `thomas`. The examples live in the repo, so clone it to run them
+(`pip install -e ".[encoder]"` from the clone).
 
 ## Try it
 

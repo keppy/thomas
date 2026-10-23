@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.4] - 2026-10-23
+
+- First release on PyPI, as `thomas-train`, published from GitHub Actions with Trusted
+  Publishing (`.github/workflows/publish.yml`), so each file carries a PyPI publish attestation.
+- Requires `gonogo-eval>=0.4,<0.5`. thomas's own calls (`evaluate`, `compare`) are unchanged;
+  0.4 adds expected actions and makes `compare()` say *borderline* when McNemar's test and the
+  difference interval disagree, so `thomas.compare` summaries can read "borderline" where 0.3
+  printed "agent B is better".
+- Banking77 receipt: `predictions_jsonl_sha256` re-recorded over the LF bytes git stores. The
+  old digest was the CRLF form of the same file (a Windows autocrlf checkout), so
+  `test_banking77_receipt_replays_without_text` failed on every LF checkout; the CRLF form of the
+  committed file reproduces the old digest exactly, so the content is unchanged.
+  `.gitattributes` keeps `examples/receipts/*` LF everywhere.
+
 ## [0.2.3] - 2026-10-05
 
 evalroute lane-encoder recipe learns from train F's learning curve.

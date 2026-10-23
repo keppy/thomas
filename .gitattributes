@@ -1,0 +1,3 @@
+# Receipts are checked by sha256 of their bytes. Keep them LF on every checkout
+# (a Windows autocrlf checkout recorded the CRLF digest once; train 2026-10-N).
+examples/receipts/* text eol=lf
