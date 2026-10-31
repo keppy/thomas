@@ -1,6 +1,6 @@
 # The thomas ↔ gonogo contract
 
-Contract version: **1** (thomas 0.2.0, gonogo-eval `>=0.2,<0.3`)
+Contract version: **1** (thomas 0.2.0, gonogo-eval `>=0.4,<0.5`)
 
 thomas trains models; gonogo decides whether they can ship. They share no code
 at runtime beyond thomas calling gonogo's public API. What they do share is

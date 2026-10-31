@@ -207,7 +207,7 @@ thomas and gonogo agree on six things: case ids, reward → `passed` / `score`,
 the confidence definition (`max(softmax(logits / T))` over the full label set),
 the artifact a training run leaves on disk, eval splits, and the gonogo calls
 thomas depends on. They're written down and versioned in **[docs/CONTRACT.md](docs/CONTRACT.md)**. It's contract version 1,
-tested against gonogo-eval `>=0.3,<0.4`.
+tested against gonogo-eval `>=0.4,<0.5`.
 
 ```python
 from thomas.contract import read_artifact   # stdlib only, no torch needed
